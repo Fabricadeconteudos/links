@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Personalização</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ── */
+    :root { --ease: cubic-bezier(.4,0,.2,1); }
+
+    [data-theme="dark"] {
+      --bg:           #0a0a0b;
+      --surface:      #18181b;
+      --surface-alt:  #1e1e21;
+      --border:       #27272a;
+      --border-hover: #3f3f46;
+      --text:         #fafafa;
+      --muted:        #a1a1aa;
+      --subtle:       #52525b;
+      --btn-bg:       rgba(255,255,255,.05);
+      --btn-bg-hov:   rgba(255,255,255,.1);
+      --primary:      #5bdc9e;
+      --danger:       #ef4444;
+    }
+
+    [data-theme="light"] {
+      --bg:           #f4f4f5;
+      --surface:      #ffffff;
+      --surface-alt:  #fafafa;
+      --border:       #e4e4e7;
+      --border-hover: #a1a1aa;
+      --text:         #09090b;
+      --muted:        #52525b;
+      --subtle:       #a1a1aa;
+      --btn-bg:       rgba(0,0,0,.04);
+      --btn-bg-hov:   rgba(0,0,0,.08);
+      --primary:      #2fc87e;
+      --danger:       #dc2626;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      transition: background .3s var(--ease), color .3s var(--ease);
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 99; height: 52px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px); display: flex; align-items: center;
+      justify-content: space-between; padding: 0 48px;
+    }
+    .topbar-brand { font-size: .8rem; font-weight: 600; color: var(--muted); }
+    .topbar-brand a { color: var(--primary); text-decoration: none; margin-left: 8px;}
+    
+    #theme-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--btn-bg);
+      color: var(--text); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    #theme-btn:hover { background: var(--btn-bg-hov); transform: rotate(20deg) scale(1.05); }
+    #theme-btn svg { width: 16px; height: 16px; pointer-events: none; }
+    .i-moon { display: block; } .i-sun { display: none; }
+    [data-theme="light"] .i-moon { display: none; }
+    [data-theme="light"] .i-sun { display: block; }
+
+    .wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { font-size: 1.5rem; font-weight: 600; }
+    
+    .btn-primary, .btn-export {
+      padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: .85rem;
+      border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: .2s;
+    }
+    .btn-primary { background: var(--primary); color: #042819; }
+    .btn-primary:hover { opacity: .9; }
+    
+    .btn-export { background: var(--btn-bg); color: var(--text); border: 1px solid var(--border); margin-left: 8px;}
+    .btn-export:hover { background: var(--btn-bg-hov); }
+    .btn-export.loading { opacity: 0.7; pointer-events: none; }
+    .btn-export.loading svg { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .help-text { font-size: 0.8rem; color: var(--muted); margin-bottom: 30px; line-height: 1.5; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab-btn {
+      background: transparent; border: none; color: var(--muted); padding: 10px 4px;
+      font-size: .9rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--primary); }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fade .3s var(--ease); }
+    @keyframes fade { from{opacity:0} to{opacity:1} }
+
+    /* ── Settings Form ── */
+    .settings-panel { background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+    .form-control {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: .9rem;
+    }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Table ── */
+    .table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: .85rem; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    th { background: var(--surface-alt); font-weight: 500; color: var(--muted); text-transform: uppercase; font-size: .75rem; letter-spacing: .5px;}
+    td { color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    
+    .type-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: .7rem; font-weight: 600; }
+    .status-off { opacity: 0.5; text-decoration: line-through; }
+
+    .actions { display: flex; gap: 4px; }
+    .btn-icon {
+      background: transparent; border: none; color: var(--muted); cursor: pointer;
+      padding: 6px; border-radius: 6px; transition: .2s;
+    }
+    .btn-icon:hover { background: var(--btn-bg-hov); color: var(--text); }
+    .btn-icon.danger:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    .btn-icon svg { width: 16px; height: 16px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: .3s; z-index: 999;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; width: 100%; max-width: 500px;
+      padding: 24px; transform: translateY(20px); transition: .3s var(--ease);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-overlay.active .modal { transform: translateY(0); }
+    .modal h2 { font-size: 1.25rem; margin-bottom: 20px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+    .btn-cancel {
+      padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: .85rem;
+      background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--btn-bg-hov); }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; cursor: pointer; }
+    .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-group span { font-size: .85rem; color: var(--text); }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border);
+      padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transition: .3s;
+      z-index: 1000; font-size: .9rem;
+    }
+    .toast.show { opacity: 1; pointer-events: auto; transform: translateY(-10px); }
+    .toast.success { border-color: var(--primary); color: var(--primary); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Login Overlay ── */
+    #login-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .3s, visibility .3s;
+    }
+    #login-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .login-box {
+      background: var(--surface); padding: 40px; border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,.2);
+      width: 100%; max-width: 400px; text-align: center;
+    }
+    .login-box h2 { margin-bottom: 20px; font-size: 1.5rem; }
+    .login-box p { color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
+
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>Acesso Restrito</h2>
+    <p>Insira a senha para acessar o painel de administração.</p>
+    <form id="login-form">
+      <input type="password" class="form-control" id="login-pwd" placeholder="Senha" required style="margin-bottom: 16px;">
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Entrar</button>
+    </form>
+    <p id="login-error" style="color: var(--danger); margin-top: 16px; margin-bottom: 0; display: none;">Senha incorreta.</p>
+  </div>
+</div>
+
+<div class="topbar">
+  <span class="topbar-brand">Admin — Personalização <a href="index.html">← Voltar ao site</a></span>
+  <button id="theme-btn" aria-label="Alternar tema">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  </button>
+</div>
+
+<div class="wrap">
+  <div class="header-actions">
+    <h1>Painel de Controle</h1>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-export" onclick="exportDataFile()">Baixar data.js</button>
+      <button class="btn-primary" id="btn-sync" onclick="syncWithJSONBin()">
+        <svg id="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Salvar na Nuvem (JSONBin)
+      </button>
+    </div>
+  </div>
+
+  <p class="help-text">
+    Edite o que quiser e clique em <strong>Salvar na Nuvem</strong> para atualizar o site ao vivo. <br>
+    <em>Atenção: A primeira vez que você configurar a nuvem, será necessário <strong>Baixar o data.js</strong> e colocar no seu Github Pages uma única vez.</em>
+  </p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('links')">Gerenciar Links</button>
+    <button class="tab-btn" onclick="switchTab('settings')">Configurações da Página</button>
+    <button class="tab-btn" onclick="switchTab('jsonbin')">Integração JSONBin</button>
+  </div>
+
+  <!-- TAB: LINKS -->
+  <div id="tab-links" class="tab-content active">
+    <div style="margin-bottom: 16px; text-align: right;">
+      <button class="btn-primary" onclick="openModal()">+ Novo Link</button>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Etiqueta</th>
+            <th>Título</th>
+            <th>Ordem</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: SETTINGS -->
+  <div id="tab-settings" class="tab-content">
+    <div class="settings-panel">
+      <div class="form-group">
+        <label>Título Principal (H1)</label>
+        <input type="text" class="form-control" id="set-title" oninput="updateSettings()">
+      </div>
+      <div class="form-group">
+        <label>Subtítulo</label>
+        <input type="text" class="form-control" id="set-subtitle" oninput="updateSettings()">
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <label>E-mail (Rodapé)</label>
+          <input type="email" class="form-control" id="set-email" oninput="updateSettings()">
+        </div>
+        <div class="form-group">
+          <label>Telefone (Rodapé)</label>
+          <input type="text" class="form-control" id="set-phone" oninput="updateSettings()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cor de Destaque (Hexadecimal)</label>
+        <div style="display:flex; gap:10px;">
+          <input type="color" id="set-color-picker" style="height:38px; width:50px; cursor:pointer;" oninput="document.getElementById('set-color').value = this.value; updateSettings()">
+          <input type="text" class="form-control" id="set-color" oninput="document.getElementById('set-color-picker').value = this.value; updateSettings()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: JSONBIN -->
+  <div id="tab-jsonbin" class="tab-content">
+    <div class="settings-panel">
+      <p class="help-text" style="margin-top:0;">
+        <strong>1.</strong> Crie uma conta gratuita no <a href="https://jsonbin.io/" target="_blank" style="color:var(--primary)">JSONBin.io</a>.<br>
+        <strong>2.</strong> Vá no seu perfil em "API Keys" e crie/copie uma <strong>Master Key</strong>. Cole-a abaixo.<br>
+        <strong>3.</strong> Se você já tiver um Bin ID anterior, cole-o. Caso contrário, deixe o Bin ID vazio que o sistema criará um novo automaticamente quando você salvar.
+      </p>
+      <div class="form-group">
+        <label>X-Master-Key (Obrigatório para salvar)</label>
+        <input type="password" class="form-control" id="jb-key" oninput="saveJBConfig()" placeholder="$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>Bin ID (Deixe em branco para criar um novo banco de dados)</label>
+        <input type="text" class="form-control" id="jb-id" oninput="saveJBConfig()" placeholder="66xxxxxxxxxxx">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Links -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Adicionar Link</h2>
+    <form id="link-form">
+      <input type="hidden" id="link-id">
+      
+      <label class="checkbox-group">
+        <input type="checkbox" id="link-visible" checked>
+        <span>Link visível no site</span>
+      </label>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>Texto da Etiqueta</label>
+          <input type="text" class="form-control" id="link-badgeText" placeholder="Ex: Formulário" required>
+        </div>
+        <div class="form-group">
+          <label>Cor da Etiqueta</label>
+          <div style="display:flex; gap:10px;">
+            <input type="color" id="link-badgeColorPicker" style="height:38px; width:40px; cursor:pointer;" value="#60a5fa" oninput="document.getElementById('link-badgeColor').value = this.value">
+            <input type="text" class="form-control" id="link-badgeColor" value="#60a5fa" oninput="document.getElementById('link-badgeColorPicker').value = this.value" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Título (ex: Substituição UAs)</label>
+        <input type="text" class="form-control" id="link-title" required>
+      </div>
+
+      <div class="form-group">
+        <label>Descriçao Curta</label>
+        <input type="text" class="form-control" id="link-desc" required>
+      </div>
+
+      <div class="form-group">
+        <label>URL (Link de destino)</label>
+        <input type="url" class="form-control" id="link-url" required>
+      </div>
+
+      <div class="form-group">
+        <label>Texto do Botão</label>
+        <input type="text" class="form-control" id="link-buttonText" placeholder="Ex: Acessar" required>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar Link</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" id="toast-icon"></svg>
+  <span id="toast-msg">Mensagem</span>
+</div>
+
+<script src="data.js"></script>
+<script>
+  // Theme Toggle
+  const btn = document.getElementById('theme-btn');
+  const root = document.documentElement;
+  const savedTheme = localStorage.getItem('qge-theme');
+  if (savedTheme) root.dataset.theme = savedTheme;
+  btn.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('qge-theme', next);
+  });
+
+  // Login Logic
+  const loginOverlay = document.getElementById('login-overlay');
+  const loginForm = document.getElementById('login-form');
+  const CORRECT_PASSWORD = 'unicv'; // <-- Troque a senha aqui se quiser
+  
+  if (sessionStorage.getItem('admin_logged') === 'true') {
+    loginOverlay.classList.add('hidden');
+  }
+
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pwd = document.getElementById('login-pwd').value;
+    if (pwd === CORRECT_PASSWORD) {
+      sessionStorage.setItem('admin_logged', 'true');
+      loginOverlay.classList.add('hidden');
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  });
+
+  // State
+  let siteData = { settings: {}, links: [] };
+  const LOCAL_KEY = 'siteData_temp';
+  
+  let jbConfig = { 
+    key: '$2a$10$q/Rt6X/0DtxQTXztLqLdT.gROBc2OQKSg1gZScutyoeqyqYdVI/QO', 
+    id: '6a45628bf5f4af5e294f5f0b' 
+  };
+
+  function loadData() {
+    // Carregar dados de links
+    const stored = localStorage.getItem(LOCAL_KEY);
+
+    if (stored) {
+      try { siteData = JSON.parse(stored); } catch(e) {}
+    } else if (window.siteData) {
+      siteData = JSON.parse(JSON.stringify(window.siteData));
+    }
+
+    if(!siteData.settings) siteData.settings = {};
+    if(!siteData.links) siteData.links = [];
+
+    // Preenche form de settings
+    document.getElementById('set-title').value = siteData.settings.title || '';
+    document.getElementById('set-subtitle').value = siteData.settings.subtitle || '';
+    document.getElementById('set-email').value = siteData.settings.contactEmail || '';
+    document.getElementById('set-phone').value = siteData.settings.contactPhone || '';
+    document.getElementById('set-color').value = siteData.settings.accentColor || '#5bdc9e';
+    document.getElementById('set-color-picker').value = siteData.settings.accentColor || '#5bdc9e';
+
+    renderTable();
+
+    // Carregar conf JSONBin
+    const storedJB = localStorage.getItem('jb_config');
+    if (storedJB) {
+      try { 
+        let parsedJB = JSON.parse(storedJB); 
+        if (parsedJB.key) jbConfig.key = parsedJB.key;
+        if (parsedJB.id) jbConfig.id = parsedJB.id;
+      } catch(e) {}
+    }
+    
+    // Se não tiver ID no localstorage, tenta pegar do arquivo original pra facilitar
+    if(!jbConfig.id && window.JSONBIN_ID) jbConfig.id = window.JSONBIN_ID;
+
+    document.getElementById('jb-key').value = jbConfig.key || '';
+    document.getElementById('jb-id').value = jbConfig.id || '';
+  }
+
+  function saveData() {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(siteData));
+    renderTable();
+  }
+
+  function saveJBConfig() {
+    jbConfig = {
+      key: document.getElementById('jb-key').value.trim(),
+      id: document.getElementById('jb-id').value.trim()
+    };
+    localStorage.setItem('jb_config', JSON.stringify(jbConfig));
+  }
+
+  // Tabs
+  window.switchTab = function(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  // Configurações Globais
+  window.updateSettings = function() {
+    siteData.settings = {
+      title: document.getElementById('set-title').value,
+      subtitle: document.getElementById('set-subtitle').value,
+      contactEmail: document.getElementById('set-email').value,
+      contactPhone: document.getElementById('set-phone').value,
+      accentColor: document.getElementById('set-color').value,
+    };
+    saveData();
+  }
+
+  function hexToRgba(hex, alpha) {
+    hex = hex.replace('#', '');
+    if(hex.length === 3) hex = hex.split('').map(x => x+x).join('');
+    const r = parseInt(hex.substring(0,2), 16) || 0;
+    const g = parseInt(hex.substring(2,4), 16) || 0;
+    const b = parseInt(hex.substring(4,6), 16) || 0;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  // Render Table
+  function renderTable() {
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    if (siteData.links.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Nenhum link cadastrado.</td></tr>';
+      return;
+    }
+
+    siteData.links.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      const bColor = item.badgeColor || '#60a5fa';
+      const bBg = hexToRgba(bColor, 0.15);
+      
+      const isVisible = item.visible !== false;
+      const opacityClass = isVisible ? '' : 'status-off';
+
+      tr.innerHTML = `
+        <td><span class="type-badge" style="background:${bBg}; color:${bColor}">${item.badgeText || 'Link'}</span></td>
+        <td class="${opacityClass}"><strong>${item.title}</strong> <br> <span style="font-size:0.75rem; color:var(--muted)">${item.description}</span></td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon" onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled style="opacity:0.2"' : ''} title="Subir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </button>
+            <button class="btn-icon" onclick="moveItem(${index}, 1)" ${index === siteData.links.length - 1 ? 'disabled style="opacity:0.2"' : ''} title="Descer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon" onclick="editItem('${item.id}')" title="Editar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-icon danger" onclick="deleteItem('${item.id}')" title="Excluir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.moveItem = function(index, direction) {
+    const newIndex = index + direction;
+    if(newIndex < 0 || newIndex >= siteData.links.length) return;
+    const temp = siteData.links[index];
+    siteData.links[index] = siteData.links[newIndex];
+    siteData.links[newIndex] = temp;
+    saveData();
+  }
+
+  // Modal handlers
+  const modal = document.getElementById('modal');
+  const form = document.getElementById('link-form');
+
+  window.openModal = function(id = null) {
+    modal.classList.add('active');
+    
+    if (id) {
+      document.getElementById('modal-title').textContent = 'Editar Link';
+      const item = siteData.links.find(i => i.id === id);
+      if(item) {
+        document.getElementById('link-id').value = item.id;
+        document.getElementById('link-visible').checked = item.visible !== false;
+        document.getElementById('link-badgeText').value = item.badgeText || '';
+        document.getElementById('link-badgeColor').value = item.badgeColor || '#60a5fa';
+        document.getElementById('link-badgeColorPicker').value = item.badgeColor || '#60a5fa';
+        document.getElementById('link-title').value = item.title;
+        document.getElementById('link-desc').value = item.description;
+        document.getElementById('link-url').value = item.url;
+        document.getElementById('link-buttonText').value = item.buttonText || 'Acessar';
+      }
+    } else {
+      document.getElementById('modal-title').textContent = 'Adicionar Link';
+      form.reset();
+      document.getElementById('link-id').value = '';
+      document.getElementById('link-badgeColor').value = '#60a5fa';
+      document.getElementById('link-badgeColorPicker').value = '#60a5fa';
+      document.getElementById('link-visible').checked = true;
+    }
+  }
+
+  window.closeModal = function() {
+    modal.classList.remove('active');
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('link-id').value;
+    
+    const newItem = {
+      id: id || Date.now().toString(),
+      visible: document.getElementById('link-visible').checked,
+      badgeText: document.getElementById('link-badgeText').value,
+      badgeColor: document.getElementById('link-badgeColor').value,
+      title: document.getElementById('link-title').value,
+      description: document.getElementById('link-desc').value,
+      url: document.getElementById('link-url').value,
+      buttonText: document.getElementById('link-buttonText').value
+    };
+
+    if (id) {
+      const index = siteData.links.findIndex(i => i.id === id);
+      if(index > -1) siteData.links[index] = newItem;
+    } else {
+      siteData.links.push(newItem);
+    }
+
+    saveData();
+    closeModal();
+  });
+
+  window.editItem = openModal;
+  
+  window.deleteItem = function(id) {
+    if(confirm('Tem certeza que deseja excluir este link?')) {
+      siteData.links = siteData.links.filter(i => i.id !== id);
+      saveData();
+    }
+  };
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.className = 'toast show ' + type;
+    
+    const icon = document.getElementById('toast-icon');
+    if (type === 'success') {
+      icon.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>';
+    } else {
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+    }
+
+    setTimeout(() => toast.classList.remove('show'), 6000);
+  }
+
+  // Export File (Fallback e Configuração Inicial)
+  window.exportDataFile = function() {
+    let jsContent = '';
+    if (jbConfig.id) {
+      jsContent += `window.JSONBIN_ID = '${jbConfig.id}';\n`;
+    }
+    jsContent += 'window.siteData = ' + JSON.stringify(siteData, null, 2) + ';';
+
+    const blob = new Blob([jsContent], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // JSONBin Sync
+  window.syncWithJSONBin = async function() {
+    if (!jbConfig.key) {
+      switchTab('jsonbin');
+      alert('Por favor, informe a Master Key na aba Integração JSONBin para poder salvar na nuvem.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-sync');
+    const syncIcon = document.getElementById('sync-icon');
+    const originalIcon = syncIcon.innerHTML;
+
+    btn.classList.add('loading');
+    syncIcon.innerHTML = '<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>'; 
+
+    try {
+      let url = 'https://api.jsonbin.io/v3/b';
+      let method = 'POST';
+
+      if (jbConfig.id) {
+        url += '/' + jbConfig.id;
+        method = 'PUT';
+      }
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': jbConfig.key,
+          'X-Bin-Private': 'false' // Importante: Bin público para que a tela principal consiga ler sem key
+        },
+        body: JSON.stringify(siteData)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Erro ao comunicar com JSONBin.');
+      }
+
+      const data = await res.json();
+      
+      if (method === 'POST') {
+        // Criou um novo bin
+        const newId = data.metadata.id;
+        document.getElementById('jb-id').value = newId;
+        saveJBConfig();
+        showToast('Banco de dados criado com sucesso! Por favor, clique em "Baixar data.js" e jogue no Github UMA ÚNICA VEZ para configurar o site.', 'success');
+      } else {
+        // Atualizou um existente
+        showToast('Sucesso! Site atualizado na nuvem em tempo real.', 'success');
+      }
+      
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      btn.classList.remove('loading');
+      syncIcon.innerHTML = originalIcon;
+    }
+  };
+
+  // Start
+  loadData();
+</script>
+
+</body>
+</html>

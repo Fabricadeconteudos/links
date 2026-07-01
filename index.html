@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerência de Qualidade — UniCV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ── */
+    :root { --ease: cubic-bezier(.4,0,.2,1); }
+
+    [data-theme="dark"] {
+      --bg:           #0a0a0b;
+      --surface:      #18181b;
+      --surface-alt:  #1e1e21;
+      --border:       #27272a;
+      --border-hover: #3f3f46;
+      --text:         #fafafa;
+      --muted:        #a1a1aa;
+      --subtle:       #52525b;
+      --btn-bg:       rgba(255,255,255,.05);
+      --btn-bg-hov:   rgba(255,255,255,.1);
+      --sh-card:      0 1px 3px rgba(0,0,0,.5);
+      --sh-hov-form:  0 12px 32px rgba(96,165,250,.15);
+      --sh-hov-sheet: 0 12px 32px rgba(52,211,153,.12);
+      --sh-hov-doc:   0 12px 32px rgba(251,191,36,.12);
+    }
+
+    [data-theme="light"] {
+      --bg:           #f4f4f5;
+      --surface:      #ffffff;
+      --surface-alt:  #fafafa;
+      --border:       #e4e4e7;
+      --border-hover: #a1a1aa;
+      --text:         #09090b;
+      --muted:        #52525b;
+      --subtle:       #a1a1aa;
+      --btn-bg:       rgba(0,0,0,.04);
+      --btn-bg-hov:   rgba(0,0,0,.08);
+      --sh-card:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+      --sh-hov-form:  0 12px 32px rgba(96,165,250,.2);
+      --sh-hov-sheet: 0 12px 32px rgba(52,211,153,.16);
+      --sh-hov-doc:   0 12px 32px rgba(251,191,36,.16);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      transition: background .3s var(--ease), color .3s var(--ease);
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky;
+      top: 0; z-index: 99;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      transition: background .3s var(--ease), border-color .3s var(--ease);
+    }
+
+    .topbar-brand {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: -.2px;
+      transition: color .3s;
+    }
+
+    #theme-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, border-color .2s, transform .25s var(--ease);
+      flex-shrink: 0;
+    }
+    #theme-btn:hover {
+      background: var(--btn-bg-hov);
+      border-color: var(--border-hover);
+      transform: rotate(20deg) scale(1.05);
+    }
+    #theme-btn svg { width: 16px; height: 16px; pointer-events: none; }
+    .i-moon { display: block; }
+    .i-sun  { display: none; }
+    [data-theme="light"] .i-moon { display: none; }
+    [data-theme="light"] .i-sun  { display: block; }
+
+    /* ── Wrapper ── */
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 60px 48px 96px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 52px;
+      animation: fadeDown .45s var(--ease) both;
+    }
+
+    .logo-img {
+      width: 54px; height: 54px;
+      border-radius: 12px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 16px;
+      transition: transform .3s var(--ease);
+    }
+    .logo-img:hover { transform: scale(1.06); }
+
+    .logo-icon {
+      width: 54px; height: 54px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #5bdc9e, #2fc87e);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 24px rgba(91,220,158,.25);
+      transition: transform .3s var(--ease);
+    }
+    .logo-icon:hover { transform: scale(1.06); }
+    .logo-icon svg { width: 26px; height: 26px; fill: #042819; }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -.5px;
+      margin-bottom: 6px;
+      transition: color .3s;
+    }
+    .sub {
+      font-size: .875rem;
+      color: var(--muted);
+      transition: color .3s;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    /* ── Cards ── */
+    a.card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: var(--sh-card);
+      position: relative;
+      overflow: hidden;
+      transition:
+        background .22s var(--ease),
+        border-color .22s var(--ease),
+        transform .22s var(--ease),
+        box-shadow .22s var(--ease);
+
+      animation: fadeUp .4s var(--ease) both;
+    }
+
+    /* Top accent line per type */
+    a.card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: var(--accent-color, #5bdc9e);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .28s var(--ease);
+    }
+    a.card:hover::before { transform: scaleX(1); }
+
+    a.card.f { --accent-color: #60a5fa; }
+    a.card.s { --accent-color: #34d399; }
+    a.card.d { --accent-color: #fbbf24; }
+
+    a.card:hover { background: var(--surface-alt); border-color: var(--border-hover); transform: translateY(-4px); }
+    a.card.f:hover { box-shadow: var(--sh-hov-form); }
+    a.card.s:hover { box-shadow: var(--sh-hov-sheet); }
+    a.card.d:hover { box-shadow: var(--sh-hov-doc); }
+
+    /* Stagger */
+    a.card:nth-child(1)  { animation-delay:.04s }
+    a.card:nth-child(2)  { animation-delay:.08s }
+    a.card:nth-child(3)  { animation-delay:.12s }
+    a.card:nth-child(4)  { animation-delay:.16s }
+    a.card:nth-child(5)  { animation-delay:.20s }
+    a.card:nth-child(6)  { animation-delay:.24s }
+    a.card:nth-child(7)  { animation-delay:.28s }
+    a.card:nth-child(8)  { animation-delay:.32s }
+    a.card:nth-child(9)  { animation-delay:.36s }
+    a.card:nth-child(10) { animation-delay:.40s }
+    a.card:nth-child(11) { animation-delay:.44s }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      font-size: .67rem; font-weight: 600;
+      letter-spacing: .4px; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      width: fit-content;
+    }
+    .bf { background: rgba(96,165,250,.13); color: #60a5fa; }
+    .bs { background: rgba(52,211,153,.13);  color: #34d399; }
+    .bd { background: rgba(251,191,36,.13);  color: #fbbf24; }
+    [data-theme="light"] .bf { background: rgba(96,165,250,.15); }
+    [data-theme="light"] .bs { background: rgba(52,211,153,.15); }
+    [data-theme="light"] .bd { background: rgba(251,191,36,.15); }
+
+    /* ── Card text ── */
+    .ct {
+      font-size: .875rem; font-weight: 500;
+      color: var(--text); line-height: 1.3;
+      transition: color .3s;
+    }
+    .cd {
+      font-size: .78rem; color: var(--muted);
+      line-height: 1.5; flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      transition: color .3s;
+    }
+    .cd strong { color: var(--text); }
+
+    /* ── Button ── */
+    .btn {
+      display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px;
+      margin-top: 4px; padding: 7px 12px;
+      border-radius: 7px;
+      background: var(--btn-bg);
+      border: 1px solid var(--border);
+      font-size: .75rem; font-weight: 500;
+      color: var(--muted);
+      width: 100%;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .btn svg { width: 12px; height: 12px; flex-shrink: 0; transition: transform .22s var(--ease); }
+    a.card:hover .btn { background: var(--btn-bg-hov); border-color: var(--border-hover); color: var(--text); }
+    a.card:hover .btn svg { transform: translateX(4px); }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 72px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: .78rem; color: var(--subtle);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px; text-align: center;
+      transition: color .3s, border-color .3s;
+      animation: fadeUp .5s .25s var(--ease) both;
+    }
+    .fl { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    footer a { color: var(--subtle); text-decoration: none; transition: color .15s; }
+    footer a:hover { color: var(--muted); }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity:0; transform:translateY(-12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width:1400px) { .wrap { padding:56px 36px 80px; } }
+    @media (max-width:1100px) {
+      .grid { grid-template-columns:repeat(3,1fr); }
+      .wrap { padding:48px 28px 72px; }
+      .topbar { padding:0 28px; }
+    }
+    @media (max-width:720px) {
+      .grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+      .wrap { padding:36px 20px 60px; }
+      .topbar { padding:0 20px; }
+      h1 { font-size:1.3rem; }
+    }
+    @media (max-width:440px) {
+      .grid { grid-template-columns:1fr; }
+      .wrap { padding:28px 16px 52px; }
+      a.card { padding:14px; }
+      h1 { font-size:1.1rem; }
+    }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <span class="topbar-brand">Gerência de Qualidade — UniCV</span>
+  <button id="theme-btn" aria-label="Alternar tema" title="Claro / Escuro">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+</div>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <img
+      src="logo.png"
+      alt="Logo UniCV"
+      class="logo-img"
+      onerror="this.style.display='none'; document.getElementById('logo-icon').style.display='flex';"
+    >
+    <div class="logo-icon" id="logo-icon" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <h1 id="page-title">Gerência de Qualidade</h1>
+    <p class="sub" id="page-subtitle">UniCV · Qualidade EAD · Fábrica de Conteúdos</p>
+  </div>
+
+  <!-- Grid -->
+  <div class="grid" id="links-grid">
+    <!-- Links serão renderizados dinamicamente pelo JavaScript -->
+  </div>
+
+  <footer>
+    <span id="footer-text">Gerência de Qualidade — UniCV</span>
+    <div class="fl">
+      <a href="mailto:fabricadeconteudos@unicv.edu.br" id="footer-email">fabricadeconteudos@unicv.edu.br</a>
+      <span id="footer-phone">(44) 99866-1211</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  const btn  = document.getElementById('theme-btn');
+  const root = document.documentElement;
+  const KEY  = 'qge-theme';
+
+  // Restore saved preference
+  const saved = localStorage.getItem(KEY);
+  if (saved) root.dataset.theme = saved;
+
+  btn.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem(KEY, next);
+  });
+</script>
+
+<script src="data.js"></script>
+<script>
+  function renderApp() {
+    // Carrega dados (Tenta local, se não usa o data.js)
+    const stored = localStorage.getItem('siteData_temp');
+    let siteData = window.siteData || { settings: {}, links: [] };
+    
+    // Suporte para versão antiga do localStorage
+    const oldStored = localStorage.getItem('linksData_temp');
+    
+    if (stored) {
+      try { siteData = JSON.parse(stored); } catch(e) {}
+    } else if (oldStored) {
+      // Migração rápida
+      try { siteData.links = JSON.parse(oldStored); } catch(e) {}
+    }
+
+    const { settings, links } = siteData;
+
+    // Aplicar configurações globais
+    if (settings) {
+      if(settings.title) {
+        document.getElementById('page-title').textContent = settings.title;
+        document.title = settings.title + " — UniCV";
+      }
+      if(settings.subtitle) document.getElementById('page-subtitle').textContent = settings.subtitle;
+      if(settings.title) document.getElementById('footer-text').textContent = settings.title + " — UniCV";
+      if(settings.contactEmail) {
+        document.getElementById('footer-email').textContent = settings.contactEmail;
+        document.getElementById('footer-email').href = "mailto:" + settings.contactEmail;
+      }
+      if(settings.contactPhone) document.getElementById('footer-phone').textContent = settings.contactPhone;
+
+      // Cor de destaque
+      if(settings.accentColor) {
+        // Criar uma tag de estilo dinâmica para customizar o CSS baseado na cor primária
+        let styleEl = document.getElementById('dynamic-styles');
+        if(!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'dynamic-styles';
+          document.head.appendChild(styleEl);
+        }
+        
+        // Calcular uma cor mais clara (com opacidade) para o background do icone e hover
+        const hex = settings.accentColor.replace('#', '');
+        const r = parseInt(hex.substring(0,2), 16);
+        const g = parseInt(hex.substring(2,4), 16);
+        const b = parseInt(hex.substring(4,6), 16);
+        const rgb = `${r}, ${g}, ${b}`;
+
+        styleEl.innerHTML = `
+          .logo-icon { background: linear-gradient(135deg, ${settings.accentColor}, #2fc87e); box-shadow: 0 0 24px rgba(${rgb},.25); }
+        `;
+      }
+    }
+
+    // Renderizar links
+    const grid = document.getElementById('links-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const visibleLinks = (links || []).filter(item => item.visible !== false);
+
+    visibleLinks.forEach((item, index) => {
+      const a = document.createElement('a');
+      // Adicionamos classes dummy f s d apenas para manter a lógica original de cores na borda,
+      // mas usaremos custom accent-color se houver
+      a.className = `card`; 
+      a.href = item.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.animationDelay = (0.04 * (index + 1)) + 's';
+      
+      const bColor = item.badgeColor || '#60a5fa';
+      
+      // converter hex para rgba para o background da badge
+      let bBg = 'rgba(96,165,250,.15)'; // fallback
+      if(bColor.startsWith('#')) {
+        const h = bColor.replace('#', '');
+        if(h.length === 6) {
+          bBg = `rgba(${parseInt(h.substring(0,2),16)}, ${parseInt(h.substring(2,4),16)}, ${parseInt(h.substring(4,6),16)}, 0.15)`;
+        }
+      }
+
+      a.innerHTML = `
+        <style>
+          .card-${item.id}::before { background: ${bColor} !important; }
+          .card-${item.id}:hover { box-shadow: 0 12px 32px ${bBg} !important; }
+        </style>
+        <span class="badge" style="background:${bBg}; color:${bColor}">${item.badgeText}</span>
+        <p class="ct">${item.title}</p>
+        <p class="cd">${item.description}</p>
+        <span class="btn">${item.buttonText || 'Acessar'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      `;
+      a.classList.add(`card-${item.id}`);
+      grid.appendChild(a);
+    });
+  }
+
+  async function fetchLiveSiteData() {
+    // Primeiro renderiza o que tem localmente (rápido)
+    renderApp();
+
+    // Depois busca atualizações na nuvem (JSONBin) se existir o ID
+    if (window.JSONBIN_ID) {
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${window.JSONBIN_ID}?meta=false`);
+        if(res.ok) {
+          const liveData = await res.json();
+          window.siteData = liveData; // atualiza a variável global
+          localStorage.setItem('siteData_temp', JSON.stringify(liveData)); // atualiza o cache
+          renderApp(); // re-renderiza com os dados frescos da nuvem
+        }
+      } catch(e) {
+        console.error('Erro ao buscar dados na nuvem:', e);
+      }
+    }
+  }
+
+  // Inicialização
+  fetchLiveSiteData();
+  
+  // Atualiza se houver mudanças no localStorage por outra aba (admin)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'siteData_temp') renderApp();
+  });
+</script>
+
+</body>
+</html>
